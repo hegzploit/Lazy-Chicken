@@ -1,5 +1,5 @@
 # This script is just helpful for one person, me!
----
+
 **Basically logins to my uni learning system and checks if there is any new assignments or lectures, then it outputs the changes in a txt file**
 ---
 detailed steps on how it's done below:
