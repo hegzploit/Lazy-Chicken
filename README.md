@@ -2,11 +2,10 @@
 
 **Basically logins to my uni learning system and checks if there is any new assignments or lectures, then it outputs the changes in a txt file**
 ---
-<details>
-  <summary>DEMO</summary>
-  ![demo](/demo/lazychick.gif)
-</details>
+### Demo:
+![demo](demo/lazychick.gif)
 
+---
 
 detailed steps on how it's done below:
 1. Send a login request with email and pwd to authenticate
