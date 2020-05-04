@@ -4,7 +4,7 @@
 ---
 <details>
   <summary>DEMO</summary>
-  ![](demo/lazychick.gif)
+  ![demo](demo\lazychick.gif)
 </details>
 
 
