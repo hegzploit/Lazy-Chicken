@@ -45,3 +45,4 @@ nodeLanguageServer.*/**
 lazychicken_logs/
 .vscode/lazy_chicken.py
 .vscode/settings.json
+my_lazy_chicken.py
