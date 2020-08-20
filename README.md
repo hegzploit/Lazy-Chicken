@@ -7,7 +7,7 @@
 
 ---
 
-detailed steps on how it's done below:
+detailed steps on how it's done below (so i don't forget tbh):
 1. Send a login request with email and pwd to authenticate
 2. Navigate to the dashboard which contains all the courses
 3. grabs all the links for the courses from the dashoard and then stores them in a list
