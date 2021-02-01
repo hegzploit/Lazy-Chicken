@@ -6,20 +6,49 @@ from pathlib import Path
 import time
 import difflib
 import filecmp
-from multiprocessing import Pool
+from multiprocessing.dummy import Pool as ThreadPool
+import configparser
+from getpass import getpass
 
 # Some Confguration
 session = requests.Session()
-lmsURL = "login_index_page_here"
-email = "uni_mail"
-password = "pass"
-dashboard_link = 'dashboard_link'
+session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.0; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0'
+
+#Main Parameters
+lmsURL = "http://edugate.eaeat.edu.eg/lms/login/index.php"
+dashboard_link = "http://edugate.eaeat.edu.eg/lms/my/"
+config = configparser.ConfigParser()
+
+email = ''
+password = ''
+def firstRun():
+    try:
+        config.read('config.ini')
+        email = config["DEFAULT"]["email"]
+        password = config["DEFAULT"]["password"]
+    except:
+        email = input("Please enter your LMS email: ")
+        password = getpass("Please enter your LMS password: ")
+        config['DEFAULT'] = {
+            'email' : email,
+            'password' : password
+        }
+        with open("config.ini", "w") as configfile:
+            config.write(configfile)
 
 
+
+def grabLoginToken():
+    get_login = session.get(lmsURL)
+    soup = BeautifulSoup(get_login.content, 'html.parser')
+    login_token = soup.find('input', attrs={'name':'logintoken', 'type':'hidden'})['value']
+    return login_token
 
 form_data = {'anchor': '',
              'username': email,
-             'password': password}
+             'password': password,
+             'logintoken': grabLoginToken()}
+
 
 
 def postRequestLogin(): #logins to the website
@@ -31,7 +60,7 @@ def courseLinks():  # scrapes the main dashboard for courses links so it works d
     link_list = []
     get_dashboard = session.get(dashboard_link)
     soup = BeautifulSoup(get_dashboard.content, 'html.parser')
-    course_link_raw = soup.find_all("div", {"id": "courses-view-in-progress"})
+    course_link_raw = soup.find_all("ul", {"class": "unlist"})
     for link in course_link_raw:
         actual_course_link = link.find_all("a", href=True)
         for link_stripped_from_list in actual_course_link:
@@ -66,7 +95,7 @@ def checkMkdir(dirname): #checks if directory exists, if not it's gonna create i
 
 
 def returnLatestFile(dirname): #returns the latest file in a directory by date
-    mypath = dirname + "\*.*"
+    mypath = dirname + "/*.*"
     latest_file = max(glob.glob(mypath), key=os.path.getmtime)
     return latest_file
 
@@ -110,8 +139,9 @@ def process_instance(p): #main function which is gonna do all the work, scraping
                             else:
                                 fc.write("%s\n" % line)
 
-if(__name__=='__main__'): #i used multi-processing for speed
-    postRequestLogin()
-    pool = Pool() 
-    pool.map(process_instance, courseLinks())
+if __name__ == '__main__': #i used multi-threading for speed
+     firstRun()
+     postRequestLogin()
+     pool = ThreadPool(10)
+     pool.map(process_instance, courseLinks())
 
