@@ -7,9 +7,7 @@ import time
 import difflib
 import filecmp
 from multiprocessing.dummy import Pool as ThreadPool
-import configparser
-from getpass import getpass
-
+from urllib import parse as urllib
 # Some Confguration
 session = requests.Session()
 session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.0; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0'
@@ -17,26 +15,12 @@ session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.0; WOW64; rv:24.0) Ge
 #Main Parameters
 lmsURL = "http://edugate.eaeat.edu.eg/lms/login/index.php"
 dashboard_link = "http://edugate.eaeat.edu.eg/lms/my/"
-config = configparser.ConfigParser()
-
 email = ''
 password = ''
-def firstRun():
-    try:
-        config.read('config.ini')
-        email = config["DEFAULT"]["email"]
-        password = config["DEFAULT"]["password"]
-    except:
-        email = input("Please enter your LMS email: ")
-        password = getpass("Please enter your LMS password: ")
-        config['DEFAULT'] = {
-            'email' : email,
-            'password' : password
-        }
-        with open("config.ini", "w") as configfile:
-            config.write(configfile)
 
-
+def telegramNotifier(message, token = '1666601451:AAGo93HUh4e-_3qXeaK7epDhpEPUBYbM_GY', chat_id = '-1001309959153'):
+    url = f'https://api.telegram.org/bot{token}/sendMessage?chat_id={chat_id}&text={message}'
+    _ = requests.get(url, timeout=10)
 
 def grabLoginToken():
     get_login = session.get(lmsURL)
@@ -138,10 +122,11 @@ def process_instance(p): #main function which is gonna do all the work, scraping
                                     break
                             else:
                                 fc.write("%s\n" % line)
+                                telegramNotifier(f"{getPages(p)[1]}: {line}")
 
 if __name__ == '__main__': #i used multi-threading for speed
-     firstRun()
      postRequestLogin()
      pool = ThreadPool(10)
      pool.map(process_instance, courseLinks())
+
 
