@@ -19,7 +19,7 @@ dashboard_link = "https://eaeatlms.mans.edu.eg/my/"
 email = "2018005"
 password = "did_u_expect_to_see_my_password??"
 
-def telegramNotifier(message, token = '1666601451:AAGo93HUh4e-_3qXeaK7epDhpEPUBYbM_GY', chat_id = '-1001309959153'):
+def telegramNotifier(message, token = '', chat_id = ''):
     url = f'https://api.telegram.org/bot{token}/sendMessage?chat_id={chat_id}&text={message}'
     _ = requests.get(url, timeout=10)
 
