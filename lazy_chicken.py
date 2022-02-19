@@ -5,6 +5,7 @@ import glob
 from pathlib import Path
 import time
 import difflib
+import re
 import filecmp
 from multiprocessing.dummy import Pool as ThreadPool
 from urllib import parse as urllib
@@ -13,17 +14,17 @@ session = requests.Session()
 session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.0; WOW64; rv:24.0) Gecko/20100101 Firefox/24.0'
 
 #Main Parameters
-lmsURL = "http://edugate.eaeat.edu.eg/lms/login/index.php"
-dashboard_link = "http://edugate.eaeat.edu.eg/lms/my/"
-email = ''
-password = ''
+lmsURL = "https://eaeatlms.mans.edu.eg/login/index.php"
+dashboard_link = "https://eaeatlms.mans.edu.eg/my/"
+email = "2018005"
+password = "did_u_expect_to_see_my_password??"
 
 def telegramNotifier(message, token = '1666601451:AAGo93HUh4e-_3qXeaK7epDhpEPUBYbM_GY', chat_id = '-1001309959153'):
     url = f'https://api.telegram.org/bot{token}/sendMessage?chat_id={chat_id}&text={message}'
     _ = requests.get(url, timeout=10)
 
 def grabLoginToken():
-    get_login = session.get(lmsURL)
+    get_login = session.get(lmsURL, verify=False)
     soup = BeautifulSoup(get_login.content, 'html.parser')
     login_token = soup.find('input', attrs={'name':'logintoken', 'type':'hidden'})['value']
     return login_token
@@ -36,26 +37,23 @@ form_data = {'anchor': '',
 
 
 def postRequestLogin(): #logins to the website
-    post_request = session.post(lmsURL, data=form_data)
+    post_request = session.post(lmsURL, data=form_data, verify=False)
+    return post_request
 
 
 def courseLinks():  # scrapes the main dashboard for courses links so it works dynamically on any account
     #postRequestLogin()
-    link_list = []
-    get_dashboard = session.get(dashboard_link)
+    links = []
+    get_dashboard = session.get(dashboard_link, verify=False)
     soup = BeautifulSoup(get_dashboard.content, 'html.parser')
-    course_link_raw = soup.find_all("ul", {"class": "unlist"})
-    for link in course_link_raw:
-        actual_course_link = link.find_all("a", href=True)
-        for link_stripped_from_list in actual_course_link:
-            if(link_stripped_from_list.get('href') != '#'):
-                link_list.append(link_stripped_from_list.get('href'))
-    link_list_no_dupes = list(set(link_list))
-    return link_list_no_dupes
+    course_links = soup.find_all("a", href=re.compile("https://eaeatlms.mans.edu.eg/course/"))
+    for link in course_links:
+        links.append(link.get('href'))
+    return list(set(links))
 
 
 def getPages(course_link):  # scrapes the content of the course link from the above fn and outputs clean list with assignments, and lectures etc.. (also scrapes courses titles)
-    get_course = session.get(course_link)
+    get_course = session.get(course_link, verify=False)
     soup = BeautifulSoup(get_course.content, 'html.parser')
     course_title = soup.head.title.text
     course_title_proper = course_title.replace(":", '').strip()
@@ -122,9 +120,9 @@ def process_instance(p): #main function which is gonna do all the work, scraping
                                     break
                             else:
                                 fc.write("%s\n" % line)
-                                telegramNotifier(f"{getPages(p)[1]}: {line}")
+                                #telegramNotifier(f"{getPages(p)[1]}: {line}")
 
-if __name__ == '__main__': #i used multi-threading for speed
+if __name__ == '__main__': #I used multi-threading for speed
      postRequestLogin()
      pool = ThreadPool(10)
      pool.map(process_instance, courseLinks())
